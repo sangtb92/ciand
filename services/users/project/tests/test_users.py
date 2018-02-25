@@ -123,7 +123,10 @@ class TestUserService(BaseTestCase):
             self.assertIn('sangnd', data['data']['users'][0]['username'])
             self.assertIn('sangnd@vnext.vn', data['data']['users'][0]['email'])
             self.assertIn('michael', data['data']['users'][1]['username'])
-            self.assertIn('sangnd.it@gmail.com', data['data']['users'][1]['email'])
+            self.assertIn(
+                'sangnd.it@gmail.com',
+                data['data']['users'][1]['email']
+            )
             self.assertIn('success', data['status'])
 
     def test_main_no_user(self):

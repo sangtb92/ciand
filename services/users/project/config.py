@@ -1,4 +1,6 @@
 import os
+
+
 class BaseConfig:
     TESTING = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False

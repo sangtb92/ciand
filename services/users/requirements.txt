@@ -5,3 +5,4 @@ psycopg2-binary
 Flask-Testing==0.7.1
 gunicorn==19.7.1
 coverage==4.4.2
+flake8===3.5.0
