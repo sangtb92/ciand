@@ -1,0 +1,30 @@
+├── docker-compose-dev.yml
+├── docker-compose-prod.yml
+└── services
+    ├── nginx
+    │   ├── Dockerfile
+    │   └── flask.conf
+    └── users
+        ├── Dockerfile-dev
+        ├── Dockerfile-prod
+        ├── entrypoint-prod.sh
+        ├── entrypoint-dev.sh
+        ├── manage.py
+        ├── project
+        │   ├── __init__.py
+        │   ├── api
+        │   │   ├── __init__.py
+        │   │   ├── models.py
+        │   │   ├── templates
+        │   │   │   └── index.html
+        │   │   └── users.py
+        │   ├── config.py
+        │   ├── db
+        │   │   ├── Dockerfile
+        │   │   └── create.sql
+        │   └── tests
+        │       ├── __init__.py
+        │       ├── base.py
+        │       ├── test_config.py
+        │       └── test_users.py
+        └── requirements.txt
