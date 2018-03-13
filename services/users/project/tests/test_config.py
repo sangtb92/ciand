@@ -25,6 +25,7 @@ class TesDevelopmentConfig(TestCase):
             ==
             os.environ.get('DATABASE_URL')
         )
+        self.assertTrue(app.config['DEBUG_TB_ENABLED'])
 
 
 class TestTestingConfig(TestCase):
@@ -45,6 +46,7 @@ class TestTestingConfig(TestCase):
             ==
             os.environ.get('DATABASE_TEST_URL')
         )
+        self.assertFalse(app.config['DEBUG_TB_ENABLED'])
 
 
 class TestProductionConfig(TestCase):
@@ -59,6 +61,7 @@ class TestProductionConfig(TestCase):
             '^t(2qwhx+^424$ys-+bggd#cw+rcxw%2u@i!+*6rky7)+54*9#'
         )
         self.assertFalse(app.config['TESTING'])
+        self.assertFalse(app.config['DEBUG_TB_ENABLED'])
 
 
 if __name__ == '__main__':
