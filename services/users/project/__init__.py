@@ -1,10 +1,13 @@
 from flask import Flask
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_debugtoolbar import DebugToolbarExtension
+from flask.ext.bcrypt import Bcrypt
 import os
 
 db = SQLAlchemy()
 toolbar = DebugToolbarExtension()
+bcrypt = Bcrypt()
 
 
 def create_app(script_info=None):
@@ -16,6 +19,9 @@ def create_app(script_info=None):
     # set up extensions
     db.init_app(app)
     toolbar.init_app(app)
+
+    migrate = Migrate(app, db)
+    bcrypt.init_app(app)
 
     from project.api.users import users_blueprint
     app.register_blueprint(users_blueprint)

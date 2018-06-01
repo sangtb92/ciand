@@ -5,7 +5,7 @@ from sqlalchemy import exc
 
 users_blueprint = Blueprint('users', __name__, template_folder='./templates')
 
-
+# users ping test
 @users_blueprint.route('/users/ping', methods=['GET'])
 def ping_pong():
     return jsonify({
@@ -14,9 +14,11 @@ def ping_pong():
     })
 
 
+# register new user
 @users_blueprint.route('/users', methods=['POST'])
 def add_user():
     post_data = request.get_json()
+    print(post_data)
     response_object = {
         'status': 'fail',
         'message': 'Invalid payload.'
@@ -25,10 +27,15 @@ def add_user():
         return jsonify(response_object), 400
     username = post_data.get('username')
     email = post_data.get('email')
+    password = post_data.get('password')
+    phone_number = post_data.get('phone_number')
+    first_name = post_data.get('first_name')
+    last_name = post_data.get('last_name')
     try:
         user = User.query.filter_by(email=email).first()
         if not user:
-            db.session.add(User(username=username, email=email))
+            db.session.add(User(user_name=username, password=password, email=email, phone_number=phone_number,
+                                first_name=first_name, last_name=last_name))
             db.session.commit()
             response_object = {
                 'status': 'success',
@@ -45,6 +52,7 @@ def add_user():
         return jsonify(response_object), 400
 
 
+# get user by id
 @users_blueprint.route('/users/<user_id>', methods=['GET'])
 def get_single_user(user_id):
     response_object = {
@@ -60,9 +68,11 @@ def get_single_user(user_id):
                 'status': 'success',
                 'data': {
                     'id': user.id,
-                    'username': user.username,
+                    'username': user.user_name,
                     'email': user.email,
-                    'active': user.active
+                    'active': user.is_active,
+                    'registered_on': user.registered_on,
+                    'last_login': user.last_login
                 }
             }
             return jsonify(response_object), 200
@@ -70,6 +80,7 @@ def get_single_user(user_id):
         return jsonify(response_object), 404
 
 
+# list users
 @users_blueprint.route('/users', methods=['GET'])
 def get_all_users():
     response_object = {
