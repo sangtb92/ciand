@@ -1,6 +1,8 @@
 import time
 import datetime
 import os
+
+import jwt
 from project import db, bcrypt
 
 
@@ -48,9 +50,49 @@ class User(db.Model):
             'admin': self.is_admin,
             'phone_number': self.phone_number,
             'last_login': self.last_login,
-            'first_name':self.first_name,
-            'last_name':self.last_name,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
         }
+
+    def encode_auth_token(self, user_id):
+        """
+        Generate auth token
+        :param user_id:
+        :return: string
+        """
+        try:
+            payload = {
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=3600),
+                'iat': datetime.datetime.utcnow(),
+                'sub': user_id
+            }
+            return jwt.encode(
+                payload=payload,
+                key=os.environ.get('SECRET_KEY'),
+                algorithm='HS256'
+            )
+        except Exception as e:
+            return e
+
+    @staticmethod
+    def decode_auth_token(auth_token):
+
+        """
+        Validates the auth token
+        :param auth_token:
+        :return: integer|string
+        """
+        try:
+            payload = jwt.decode(auth_token, os.environ.get('SECRET_KEY'))
+            is_blacklisted_token = BlacklistToken.check_blacklist(auth_token)
+            if is_blacklisted_token:
+                return 'Token blacklisted. Please log in again.'
+            else:
+                return payload['sub']
+        except jwt.ExpiredSignatureError:
+            return 'Signature expired. Please log in again.'
+        except jwt.InvalidTokenError:
+            return 'Invalid token. Please log in again.'
 
 
 class BlacklistToken(db.Model):
