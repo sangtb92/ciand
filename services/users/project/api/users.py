@@ -1,8 +1,10 @@
-import jwt
 from flask import Blueprint, jsonify, request, render_template, make_response
 from project import db, bcrypt
 from project.api.models import User
 from sqlalchemy import exc
+from project.api.ultis import validate_user_data
+from project.api.constant import BAD_REQUEST, MSG_EMAIL_EXIST, MSG_INVALID_PAYLOAD, MSG_EMAIL_ADDED, ACCESS_FORBIDDEN, \
+    CREATED, MSG_ACCESS_FORBIDDEN, NOT_FOUND, MSG_USER_NOT_EXIST, OK_REQUEST
 
 users_blueprint = Blueprint('users', __name__, template_folder='./templates')
 
@@ -17,40 +19,49 @@ def ping_pong():
 
 
 # register new user
-@users_blueprint.route('/users', methods=['POST'])
+@users_blueprint.route('/users/register', methods=['POST'])
 def add_user():
     post_data = request.get_json()
     response_object = {
-        'status': 'fail',
-        'message': 'Invalid payload.'
+        'code': BAD_REQUEST,
+        'message': MSG_INVALID_PAYLOAD
     }
     if not post_data:
-        return jsonify(response_object), 400
-    username = post_data.get('username')
+        return jsonify(response_object), BAD_REQUEST
+    user_name = post_data.get('username')
     email = post_data.get('email')
     password = post_data.get('password')
+    re_password = post_data.get('re_password')
     phone_number = post_data.get('phone_number')
     first_name = post_data.get('first_name')
     last_name = post_data.get('last_name')
+
+    # validate request param
+    resp_object = validate_user_data(email, user_name, password, re_password)
+    if resp_object:
+        return make_response(jsonify(resp_object)), resp_object.get('code')
+
     try:
         user = User.query.filter_by(email=email).first()
         if not user:
-            db.session.add(User(user_name=username, password=password, email=email, phone_number=phone_number,
-                                first_name=first_name, last_name=last_name))
+            db.session.add(User(user_name=user_name, password=password, email=email, phone_number=phone_number,
+                                first_name=first_name, last_name=last_name, status=0, is_admin=False, is_active=False))
+
             db.session.commit()
             response_object = {
-                'status': 'success',
-                'message': f'{email} was added!'
+                'code': CREATED,
+                'message': MSG_EMAIL_ADDED.format(email)
             }
-            return jsonify(response_object), 201
+            return jsonify(response_object), CREATED
         else:
             response_object = {
-                'status': 'fail',
-                'message': 'Sorry. That email already exists.'
+                'code': BAD_REQUEST,
+                'message': MSG_EMAIL_EXIST
             }
-            return jsonify(response_object), 400
-    except exc.IntegrityError:
-        return jsonify(response_object), 400
+            return jsonify(response_object), BAD_REQUEST
+    except exc.IntegrityError as e:
+        print(e)
+        return jsonify(response_object), BAD_REQUEST
 
 
 # get user by id
@@ -65,23 +76,30 @@ def get_single_user(user_id):
         resp = User.decode_auth_token(auth_token)
 
     response_object = {
-        'status': 'fail',
-        'message': 'User does not exist.'
+        'code': NOT_FOUND,
+        'message': MSG_USER_NOT_EXIST
     }
     try:
         if not isinstance(resp, str):
-            user = User.query.filter_by(id=int(resp)).first()
+            admin_user = User.query.filter_by(id=int(resp)).first()
+            user = User.query.filter_by(id=int(user_id)).first()
         else:
             response_object = {
-                'status': 'fail',
+                'code': BAD_REQUEST,
                 'message': resp
             }
-            return make_response(jsonify(response_object)), 400
+            return make_response(jsonify(response_object)), BAD_REQUEST
         if not user:
-            return jsonify(response_object), 404
+            return jsonify(response_object), NOT_FOUND
+        elif not admin_user.is_admin:
+            response_object = {
+                "code": ACCESS_FORBIDDEN,
+                "message": MSG_ACCESS_FORBIDDEN
+            }
+            return jsonify(response_object), ACCESS_FORBIDDEN
         else:
             response_object = {
-                'status': 'success',
+                'code': OK_REQUEST,
                 'data': {
                     'id': user.id,
                     'username': user.user_name,
@@ -91,9 +109,10 @@ def get_single_user(user_id):
                     'last_login': user.last_login
                 }
             }
-            return jsonify(response_object), 200
-    except ValueError:
-        return make_response(jsonify(response_object)), 404
+            return jsonify(response_object), OK_REQUEST
+    except ValueError as e:
+        print(e)
+        return make_response(jsonify(response_object)), NOT_FOUND
 
 
 # list users

@@ -12,3 +12,5 @@ Flask-Migrate
 Flask-Bcrypt
 PyJWT==1.4.2
 psycopg2-binary
+validate_email
+pyDNS
